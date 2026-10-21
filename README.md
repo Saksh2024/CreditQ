@@ -13,7 +13,7 @@
 
 ---
 
-## 🚀 Key Highlights & Breakthroughs
+##  Key Highlights & Breakthroughs
 
 * **Solved State Aliasing (1D $\rightarrow$ 4D):** Evolved observation space from 1D mean FICO to a 4D state vector `[acceptance_rate, incoming_mean_fico, rejection_rate, default_rate]`, preventing the agent from misinterpreting borrower score drops as strict cutoffs and isolating trailing default surges before capital insolvency.
 * **Vectorized Counterfactual Updating:** Engineered a NumPy counterfactual updater evaluating all 34 cutoff actions simultaneously across each application batch, recovering **97% of cohort feedback signals** and preventing policy divergence under selection bias.
@@ -23,7 +23,7 @@
 
 ---
 
-## 📊 Table 1: Empirical Benchmark Results (78-Week Biweekly Horizon)
+##  Table 1: Empirical Benchmark Results (78-Week Biweekly Horizon)
 
 Benchmarked on **100,000+ LendingClub loans** (80K train / 20K test) across 100 Monte Carlo iterations ($N=100$):
 
@@ -36,7 +36,7 @@ Benchmarked on **100,000+ LendingClub loans** (80K train / 20K test) across 100 
 
 ---
 
-## 🏗️ Architecture Overview
+## Architecture Overview
 
 ```
        Incoming Loan Stream (50 apps/week)
@@ -74,7 +74,7 @@ $$R_t = \sum_{i \in \text{Approved}} \left( \mathbb{I}(\text{repaid}_i) \cdot L_
 
 ---
 
-## 💻 Quickstart & Installation
+##  Quickstart & Installation
 
 ### 1. Clone & Set Up Environment
 ```bash
@@ -102,7 +102,7 @@ python Source/test_biweekly.py
 
 ---
 
-## 📁 Repository Structure
+##  Repository Structure
 
 ```
 CreditQ/
@@ -124,7 +124,7 @@ CreditQ/
 
 ---
 
-## 📜 Citation & License
+##  Citation & License
 
 Developed by **Sakshi Tandel** ([GitHub](https://github.com/Saksh2024) | [LinkedIn](https://www.linkedin.com/in/sakshitandel/)).  
 Released under the [MIT License](LICENSE).
