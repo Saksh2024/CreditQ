@@ -1,0 +1,29 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+.ipynb_checkpoints
+
+# Large raw dataset archives (>100MB) and binary models
+credit score optimization/
+*.gz
+*.gzip
+*.zip
+*.tar
+*.pkl
+
+# Virtual environments
+venv/
+env/
+.env
+
+# Personal & Scratch files
+Sakshi_Tandel_Application_Responses.pdf
+scratch_paper_text.txt
+generate_pdf.py
+scratch/
+scratch_git/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

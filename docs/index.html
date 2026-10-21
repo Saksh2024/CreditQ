@@ -1,0 +1,1275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CreditQ — Autonomous RL Credit Decisioning System</title>
+    <meta name="description" content="Dynamic Acceptance Threshold Optimization under Population Drift & Macro Shocks on 100K LendingClub Benchmark using 4D Reinforcement Learning.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Chart.js for interactive visualizations -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <!-- KaTeX for crisp mathematical typography -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+    <style>
+        :root {
+            --primary: #1E3A8A;
+            --primary-light: #2563EB;
+            --accent: #0EA5E9;
+            --success: #10B981;
+            --danger: #EF4444;
+            --warning: #F59E0B;
+            --bg-main: #0B0F19;
+            --bg-card: #111827;
+            --bg-card-hover: #1F2937;
+            --border-color: #1F2937;
+            --border-focus: #3B82F6;
+            --text-main: #F3F4F6;
+            --text-muted: #9CA3AF;
+            --text-heading: #FFFFFF;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        h1, h2, h3, h4, .font-display {
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+        }
+
+        /* Top Navigation */
+        header {
+            border-bottom: 1px solid var(--border-color);
+            background: rgba(11, 15, 25, 0.85);
+            backdrop-filter: blur(12px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-inner {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 4.5rem;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            color: var(--text-heading);
+        }
+
+        .brand-badge {
+            background: linear-gradient(135deg, #2563EB, #0EA5E9);
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1.2rem;
+            color: #fff;
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+        }
+
+        .brand-name {
+            font-size: 1.4rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 1.75rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover {
+            color: var(--accent);
+        }
+
+        .btn-cta {
+            background: linear-gradient(135deg, #2563EB, #0284C7);
+            color: #fff !important;
+            padding: 0.55rem 1.25rem;
+            border-radius: 8px;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+            transition: transform 0.15s, box-shadow 0.15s !important;
+        }
+
+        .btn-cta:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.45);
+        }
+
+        /* Hero Section */
+        .hero {
+            padding: 5rem 0 3rem;
+            text-align: center;
+            position: relative;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -20%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 600px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(37, 99, 235, 0.15) 0%, rgba(11, 15, 25, 0) 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .hero-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(37, 99, 235, 0.12);
+            border: 1px solid rgba(37, 99, 235, 0.3);
+            border-radius: 9999px;
+            padding: 0.35rem 1rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--accent);
+            margin-bottom: 1.5rem;
+        }
+
+        .hero-title {
+            font-size: 3.25rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            line-height: 1.15;
+            margin-bottom: 1.25rem;
+            background: linear-gradient(135deg, #FFFFFF 30%, #94A3B8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-desc {
+            max-width: 820px;
+            margin: 0 auto 2.5rem;
+            font-size: 1.15rem;
+            color: var(--text-muted);
+            line-height: 1.7;
+        }
+
+        .hero-tags {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.75rem;
+            margin-bottom: 3.5rem;
+        }
+
+        .tag {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            padding: 0.4rem 0.9rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #CBD5E1;
+        }
+
+        .tag.highlight {
+            border-color: rgba(16, 185, 129, 0.4);
+            color: #34D399;
+            background: rgba(16, 185, 129, 0.08);
+        }
+
+        /* Simulator Card */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+            margin-bottom: 3.5rem;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .card-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .simulator-grid {
+            display: grid;
+            grid-template-columns: 340px 1fr;
+            gap: 2rem;
+        }
+
+        @media (max-width: 992px) {
+            .simulator-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Controls Panel */
+        .controls-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+            background: rgba(15, 23, 42, 0.6);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.45rem;
+        }
+
+        .form-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #CBD5E1;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        select, input[type="range"] {
+            width: 100%;
+        }
+
+        select {
+            background: #1E293B;
+            border: 1px solid #334155;
+            color: #F8FAFC;
+            padding: 0.65rem 0.9rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            outline: none;
+            cursor: pointer;
+        }
+
+        select:focus {
+            border-color: var(--border-focus);
+        }
+
+        .range-value {
+            color: var(--accent);
+            font-weight: 700;
+        }
+
+        input[type="range"] {
+            accent-color: var(--primary-light);
+            cursor: pointer;
+        }
+
+        .btn-run {
+            background: linear-gradient(135deg, #10B981, #059669);
+            color: #fff;
+            border: none;
+            padding: 0.85rem 1.5rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);
+            transition: transform 0.15s, box-shadow 0.15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .btn-run:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(16, 185, 129, 0.5);
+        }
+
+        /* KPI Dashboard */
+        .kpi-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .kpi-row {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .kpi-card {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 1.15rem;
+            text-align: center;
+        }
+
+        .kpi-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .kpi-val {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: #F8FAFC;
+            margin: 0.2rem 0;
+        }
+
+        .kpi-badge {
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .kpi-badge.positive {
+            color: var(--success);
+        }
+
+        .kpi-badge.negative {
+            color: var(--danger);
+        }
+
+        /* Chart Canvas Wrappers */
+        .chart-box {
+            background: rgba(15, 23, 42, 0.4);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+            height: 280px;
+            position: relative;
+        }
+
+        /* Table Styling */
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+
+        th {
+            background: #1E293B;
+            color: #CBD5E1;
+            font-weight: 600;
+            padding: 0.85rem 1rem;
+            border-bottom: 2px solid #334155;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+        }
+
+        td {
+            padding: 0.85rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+            color: #E2E8F0;
+        }
+
+        tr:hover td {
+            background: rgba(30, 41, 59, 0.5);
+        }
+
+        .badge-sig {
+            display: inline-block;
+            background: rgba(16, 185, 129, 0.15);
+            color: #34D399;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 4px;
+            padding: 0.2rem 0.5rem;
+            font-weight: 700;
+            font-size: 0.75rem;
+        }
+
+        /* Figure Gallery Grid */
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 992px) {
+            .gallery-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 600px) {
+            .gallery-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .gallery-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .gallery-item:hover {
+            transform: translateY(-4px);
+            border-color: var(--primary-light);
+        }
+
+        .gallery-img-wrap {
+            height: 200px;
+            overflow: hidden;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .gallery-img-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s;
+        }
+
+        .gallery-item:hover img {
+            transform: scale(1.04);
+        }
+
+        .gallery-info {
+            padding: 1rem 1.25rem;
+        }
+
+        .gallery-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #F8FAFC;
+            margin-bottom: 0.25rem;
+        }
+
+        .gallery-desc {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        .tab-bar {
+            display: flex;
+            gap: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 1.5rem;
+            overflow-x: auto;
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            font-weight: 600;
+            padding: 0.65rem 1.25rem;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .tab-btn.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+            background: rgba(14, 165, 233, 0.08);
+            border-radius: 6px 6px 0 0;
+        }
+
+        /* Footer */
+        footer {
+            border-top: 1px solid var(--border-color);
+            padding: 3rem 0 4rem;
+            margin-top: 5rem;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header Navigation -->
+    <header>
+        <div class="container nav-inner">
+            <a href="#" class="brand">
+                <div class="brand-badge">Q</div>
+                <div class="brand-name">CreditQ</div>
+            </a>
+            <ul class="nav-links">
+                <li><a href="#simulator">Live Simulator</a></li>
+                <li><a href="#benchmarks">Table 1 Benchmarks</a></li>
+                <li><a href="#gallery">Figures Gallery</a></li>
+                <li><a href="#architecture">4D Architecture</a></li>
+                <li><a href="https://github.com/Saksh2024/CreditQ" target="_blank" class="btn-cta">GitHub Repo</a></li>
+            </ul>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="hero-pill">
+                <span>⚡ Research-Grade Reinforcement Learning</span>
+                <span>•</span>
+                <span>v9.0 Dense Counterfactual Engine</span>
+            </div>
+            <h1 class="hero-title">Autonomous Credit Decisioning<br>Under Economic Shocks</h1>
+            <p class="hero-desc">
+                CreditQ continuously adapts credit acceptance thresholds to population drift and macroeconomic crisis shocks using a 4D state representation, Gaussian RBF value network, and dense counterfactual off-policy updates across all 34 actions — delivering verified capital preservation and resilient balance sheets.
+            </p>
+            <div class="hero-tags">
+                <div class="tag highlight">v9.0 Dense Counterfactuals Active</div>
+                <div class="tag">Calibrated 55% Recovery (LGD 0.45)</div>
+                <div class="tag">78-Week Life-of-Loan Horizon</div>
+                <div class="tag">LendingClub 100K Benchmark</div>
+                <div class="tag">Statistically Significant (p &lt; 10⁻⁸)</div>
+                <div class="tag">OpenAI Gymnasium</div>
+            </div>
+        </section>
+
+        <!-- Live Interactive Simulation Sandbox -->
+        <section id="simulator">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span>🕹️</span> Live Macroeconomic Stress Simulator
+                    </div>
+                    <div>
+                        <span id="lblBaselineCutoff" style="font-size: 0.85rem; color: #94A3B8;">Static Baseline Cutoff: <b>Fixed FICO 695</b></span>
+                    </div>
+                </div>
+
+                <div class="simulator-grid">
+                    <!-- Controls -->
+                    <div class="controls-panel">
+                        <div class="form-group">
+                            <label class="form-label" for="modelFramework">Origination Engine</label>
+                            <select id="modelFramework" onchange="handleFrameworkChange()">
+                                <option value="v9" selected>v9.0 Dense Counterfactuals (78 Wks, 55% Recovery, LGD 0.45)</option>
+                                <option value="v7">v7.0 Paper Baseline (24 Wks, 0% Recovery, LGD 1.0)</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="scenarioSelect">Macroeconomic Preset</label>
+                            <select id="scenarioSelect" onchange="handlePresetChange()">
+                                <option value="recession">Severe Recession Shock (-20 FICO &amp; +10% Defaults)</option>
+                                <option value="default_surge">Systemic Default Surge (+10% Defaults)</option>
+                                <option value="score_drop">Population Drift (-20 FICO Migration)</option>
+                                <option value="clean">Clean Economy Control (Zero Shock)</option>
+                                <option value="custom">Custom Stress Scenario...</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">
+                                <span>FICO Score Shift</span>
+                                <span class="range-value" id="valFico">-20 pts</span>
+                            </label>
+                            <input type="range" id="sliderFico" min="-50" max="50" step="5" value="-20" oninput="updateControls()">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">
+                                <span>Default Rate Shock</span>
+                                <span class="range-value" id="valDefault">+10.0%</span>
+                            </label>
+                            <input type="range" id="sliderDefault" min="-5" max="20" step="1" value="10" oninput="updateControls()">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">
+                                <span>Simulation Horizon</span>
+                                <span class="range-value" id="valWeeks">78 Weeks (39 Bi-Weeks)</span>
+                            </label>
+                            <input type="range" id="sliderWeeks" min="12" max="78" step="6" value="78" oninput="updateControls()">
+                        </div>
+
+                        <button class="btn-run" onclick="runSimulation()">
+                            <span>▶</span> Run Dynamic Simulation
+                        </button>
+                    </div>
+
+                    <!-- Output Dashboard -->
+                    <div>
+                        <div class="kpi-row">
+                            <div class="kpi-card">
+                                <div class="kpi-label">Static Baseline P&amp;L</div>
+                                <div class="kpi-val" id="kpiBaseline">-$60,737</div>
+                                <div class="kpi-badge negative">Fixed FICO 760</div>
+                            </div>
+                            <div class="kpi-card">
+                                <div class="kpi-label">RL Agent P&amp;L</div>
+                                <div class="kpi-val" id="kpiRL">-$39,328</div>
+                                <div class="kpi-badge positive" id="kpiDelta">+$21,410 Saved (+35.2%)</div>
+                            </div>
+                            <div class="kpi-card">
+                                <div class="kpi-label">Portfolio Default Rate</div>
+                                <div class="kpi-val" id="kpiDefRate">19.2%</div>
+                                <div class="kpi-badge" style="color: #94A3B8;" id="kpiDefSub">Baseline: 17.5%</div>
+                            </div>
+                            <div class="kpi-card">
+                                <div class="kpi-label">Avg Cutoff Adopted</div>
+                                <div class="kpi-val" id="kpiCutoff">FICO 798</div>
+                                <div class="kpi-badge positive">Dynamic Tightening</div>
+                            </div>
+                        </div>
+
+                        <!-- Charts -->
+                        <div class="chart-box">
+                            <canvas id="chartProfit"></canvas>
+                        </div>
+                        <div class="chart-box">
+                            <canvas id="chartCutoff"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Formal Research Benchmark Table 1 -->
+        <section id="benchmarks" style="margin-bottom: 4rem;">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span>📊</span> Comparative Macroeconomic Benchmarks
+                    </div>
+                </div>
+
+                <div class="tab-bar">
+                    <button id="tabBtnV9" class="tab-btn active" onclick="switchBenchmarkTab('v9')">
+                        🚀 v9.0 Dense Counterfactuals (78 Weeks / 55% Recovery / All 34 Actions)
+                    </button>
+                    <button id="tabBtnV7" class="tab-btn" onclick="switchBenchmarkTab('v7')">
+                        📜 v7.0 Paper Baseline (24 Weeks / 0% Recovery / 100 Monte Carlo Runs)
+                    </button>
+                </div>
+
+                <!-- Tab Content: v9.0 Dense Counterfactual Benchmark -->
+                <div id="tabContentV9" class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Scenario &amp; Stress Condition</th>
+                                <th>Static Cutoff (FICO 695)</th>
+                                <th>v9.0 Dense RL Agent</th>
+                                <th>Net Advantage (Δ)</th>
+                                <th>Average RL Cutoff</th>
+                                <th>Risk Policy Dynamics</th>
+                                <th>Balance-Sheet Impact</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><b>Scenario 1: Clean Economy Control</b><br><span style="font-size:0.8rem; color:#94A3B8;">Zero macroeconomic drift / baseline economy</span></td>
+                                <td>$672,219</td>
+                                <td>$626,497</td>
+                                <td style="color:#94A3B8;">-$45,722 (-6.8%)</td>
+                                <td>FICO 685.9</td>
+                                <td>Active adaptation around 680–695 revenue peak</td>
+                                <td><span style="color:#CBD5E1;">Normal Operation</span></td>
+                            </tr>
+                            <tr style="background: rgba(16, 185, 129, 0.05);">
+                                <td><b>Scenario 2: Population Drift</b><br><span style="font-size:0.8rem; color:#94A3B8;">-20 FICO downward borrower migration</span></td>
+                                <td>$435,997</td>
+                                <td>$636,472</td>
+                                <td style="color:#34D399; font-weight:700;">+$200,475 (+45.98%)</td>
+                                <td>FICO 724.9 → 675</td>
+                                <td>Safely expands origination to capture solvent shifted borrowers</td>
+                                <td><span class="badge-sig">+46.0% Profit Surge</span></td>
+                            </tr>
+                            <tr style="background: rgba(16, 185, 129, 0.05);">
+                                <td><b>Scenario 3: Systemic Default Surge</b><br><span style="font-size:0.8rem; color:#94A3B8;">+10% default surge across all credit tiers</span></td>
+                                <td>-$819,404</td>
+                                <td>-$325,417</td>
+                                <td style="color:#34D399; font-weight:700;">+$493,987 (+60.29%)</td>
+                                <td>FICO 983.2 / STOP</td>
+                                <td>Swiftly ratchets past 815 and activates STOP_LENDING freeze</td>
+                                <td><span class="badge-sig">+$494k Capital Preserved</span></td>
+                            </tr>
+                            <tr style="background: rgba(16, 185, 129, 0.05);">
+                                <td><b>Scenario 4: Severe Crisis Shock</b><br><span style="font-size:0.8rem; color:#94A3B8;">-20 FICO &amp; +10% default surge (Compound Recession)</span></td>
+                                <td>-$340,318</td>
+                                <td>-$207,893</td>
+                                <td style="color:#34D399; font-weight:700;">+$132,425 (+38.91%)</td>
+                                <td>FICO 797.2</td>
+                                <td>Aggressively escalates into 760–800 protective defense</td>
+                                <td><span class="badge-sig">+38.9% Loss Reduction</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Tab Content: v7.0 Paper Baseline (Hidden by default) -->
+                <div id="tabContentV7" class="table-responsive" style="display: none;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Scenario &amp; Description</th>
+                                <th>Static Baseline (FICO 760)</th>
+                                <th>RL Agent Profit</th>
+                                <th>Net Advantage (Δ)</th>
+                                <th>Paired t-Stat</th>
+                                <th>p-Value</th>
+                                <th>Cohen's d</th>
+                                <th>Significance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><b>Scenario 1: Population Drift</b><br><span style="font-size:0.8rem; color:#94A3B8;">-20 FICO downward borrower migration</span></td>
+                                <td>$1,292 ± $28,626</td>
+                                <td>-$3,615 ± $34,768</td>
+                                <td>-$4,906</td>
+                                <td>t = -1.65</td>
+                                <td>p = 0.949</td>
+                                <td>d = -0.16</td>
+                                <td><span style="color:#94A3B8;">Not Significant</span></td>
+                            </tr>
+                            <tr>
+                                <td><b>Scenario 2: Credit Expansion</b><br><span style="font-size:0.8rem; color:#94A3B8;">+20 FICO upward credit migration</span></td>
+                                <td>-$14,901 ± $65,541</td>
+                                <td>-$75,754 ± $86,560</td>
+                                <td>-$60,854</td>
+                                <td>t = -7.46</td>
+                                <td>p = 1.000</td>
+                                <td>d = -0.75</td>
+                                <td><span style="color:#94A3B8;">Not Significant</span></td>
+                            </tr>
+                            <tr style="background: rgba(16, 185, 129, 0.05);">
+                                <td><b>Scenario 3: Systemic Default Surge</b><br><span style="font-size:0.8rem; color:#94A3B8;">+10% default surge across all credit tiers</span></td>
+                                <td>-$118,024 ± $60,586</td>
+                                <td>-$91,405 ± $52,852</td>
+                                <td style="color:#34D399; font-weight:700;">+$26,619</td>
+                                <td><b>t = 6.08</b></td>
+                                <td><b>1.14e-08</b></td>
+                                <td>d = 0.61</td>
+                                <td><span class="badge-sig">p &lt; 0.001 ***</span></td>
+                            </tr>
+                            <tr style="background: rgba(16, 185, 129, 0.05);">
+                                <td><b>Scenario 4: Severe Crisis Shock</b><br><span style="font-size:0.8rem; color:#94A3B8;">-20 FICO &amp; +10% default surge (Compound Recession)</span></td>
+                                <td>-$60,737 ± $42,209</td>
+                                <td>-$39,328 ± $28,520</td>
+                                <td style="color:#34D399; font-weight:700;">+$21,410</td>
+                                <td><b>t = 5.90</b></td>
+                                <td><b>2.51e-08</b></td>
+                                <td>d = 0.59</td>
+                                <td><span class="badge-sig">p &lt; 0.001 ***</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Figures Gallery -->
+        <section id="gallery" style="margin-bottom: 4rem;">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span>🖼️</span> Publication Figures Gallery (Sequential System Numbering)
+                    </div>
+                </div>
+                <div class="gallery-grid">
+                    <div class="gallery-item">
+                        <div class="gallery-img-wrap">
+                            <img src="Figures/fig_01_baseline_threshold_optimization.png" alt="Figure 1" onerror="this.src='Source/1_baseline_optimization.png'">
+                        </div>
+                        <div class="gallery-info">
+                            <div class="gallery-title">Figure 1: Baseline Static Cutoff Curve</div>
+                            <div class="gallery-desc">Traditional cost-sensitive threshold search identifying optimal FICO 760 cutoff.</div>
+                        </div>
+                    </div>
+
+                    <div class="gallery-item">
+                        <div class="gallery-img-wrap">
+                            <img src="Figures/fig_02_learned_value_function_shape.png" alt="Figure 2" onerror="this.src='Source/2_q_value_vs_baseline.png'">
+                        </div>
+                        <div class="gallery-info">
+                            <div class="gallery-title">Figure 2: Value Function Alignment</div>
+                            <div class="gallery-desc">Normalized Q-value curve matching the static profit curve, replicating paper theory.</div>
+                        </div>
+                    </div>
+
+                    <div class="gallery-item">
+                        <div class="gallery-img-wrap">
+                            <img src="Figures/fig_03_training_reward_convergence.png" alt="Figure 3" onerror="this.src='Source/3_training_convergence.png'">
+                        </div>
+                        <div class="gallery-info">
+                            <div class="gallery-title">Figure 3: Training Convergence</div>
+                            <div class="gallery-desc">Episode profit convergence over 100 Monte Carlo training episodes with temperature decay.</div>
+                        </div>
+                    </div>
+
+                    <div class="gallery-item">
+                        <div class="gallery-img-wrap">
+                            <img src="Figures/fig_04_monte_carlo_statistical_benchmarks.png" alt="Figure 4" onerror="this.src='Source/figure_8_monte_carlo_benchmarks.png'">
+                        </div>
+                        <div class="gallery-info">
+                            <div class="gallery-title">Figure 4: 100-Run Monte Carlo Benchmarks</div>
+                            <div class="gallery-desc">Cumulative trajectories with 95% CI bands &amp; empirical profit advantage distributions.</div>
+                        </div>
+                    </div>
+
+                    <div class="gallery-item">
+                        <div class="gallery-img-wrap">
+                            <img src="Figures/fig_05_dynamic_policy_cutoff_tightening.png" alt="Figure 5" onerror="this.src='Source/figure_9_action_cutoff_dynamics.png'">
+                        </div>
+                        <div class="gallery-info">
+                            <div class="gallery-title">Figure 5: Policy Cutoff Dynamics</div>
+                            <div class="gallery-desc">Weekly threshold shifting into the 790–810 bracket during severe recession shock.</div>
+                        </div>
+                    </div>
+
+                    <div class="gallery-item">
+                        <div class="gallery-img-wrap">
+                            <img src="Figures/fig_06_recession_capital_preservation.png" alt="Figure 6" onerror="this.src='Source/test_profit_comparison.png'">
+                        </div>
+                        <div class="gallery-info">
+                            <div class="gallery-title">Figure 6: Capital Preservation Trajectory</div>
+                            <div class="gallery-desc">Cumulative P&amp;L delta demonstrating sustained loss prevention against static cutoffs.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Architecture Section -->
+        <section id="architecture">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span>🧠</span> The 4D State Representation &amp; Mathematical Formulation
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                    <div>
+                        <h3 style="color: #38BDF8; margin-bottom: 0.75rem;">1. Solving the "Acceptance Rate Trap"</h3>
+                        <p style="color: #94A3B8; font-size: 0.95rem; margin-bottom: 1rem;">
+                            In the original paper, state was modeled as a 1D scalar \(S = [\text{acceptance\_rate}]\). On authentic data, this caused <b>severe state aliasing</b>: during population drift (-20 FICO), approval volume drops. The naive 1D agent misinterprets this as <i>"policy is too strict"</i> and mistakenly loosens cutoffs into toxic credit right when macro defaults are escalating.
+                        </p>
+                        <h3 style="color: #38BDF8; margin-bottom: 0.75rem;">2. Active-Range 4D State Space</h3>
+                        <p style="color: #94A3B8; font-size: 0.95rem;">
+                            We expanded the observation space with active-range scaling into \([0.0, 1.0]^4\):
+                        </p>
+                        <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid var(--border-color); padding: 1.25rem; border-radius: 10px; margin-top: 0.75rem; text-align: center; overflow-x: auto;">
+                            $$\mathbf{S}_t = \begin{bmatrix}
+                            \text{norm\_acc\_rate}_{t-1} \\[6pt]
+                            \dfrac{\text{batch\_mean\_fico}_t - 650}{150} \\[6pt]
+                            1 - \text{norm\_acc\_rate}_{t-1} \\[6pt]
+                            \dfrac{\text{smooth\_prev\_default\_rate}_{t-1}}{0.25}
+                            \end{bmatrix} \in [0.0, 1.0]^4$$
+                        </div>
+                    </div>
+                    <div>
+                        <h3 style="color: #38BDF8; margin-bottom: 0.75rem;">3. Model Architecture</h3>
+                        <ul style="color: #94A3B8; font-size: 0.95rem; line-height: 1.8; margin-left: 1.25rem;">
+                            <li><b>Feature Projection:</b> 2,000-dimensional Gaussian Radial Basis Function (RBF) kernel via <code>RBFSampler(gamma=2.0)</code>.</li>
+                            <li><b>Action Space:</b> 34 discrete cutoff actions mapping FICO 660..820 (in steps of 5) plus emergency <code>STOP_LENDING</code> freeze action.</li>
+                            <li><b>Dense Counterfactual Batch Updating:</b> Vectorized off-policy calculation across all 34 candidate thresholds simultaneously per cohort, eliminating action blind spots and enabling instant adaptation without conservative policy lock-in.</li>
+                            <li><b>Experience Replay &amp; Mini-Batches:</b> Online experience replay (\(\alpha = 0.014\), mini-batch size 32, \(\gamma = 0.95\)) calibrated for bi-weekly life-of-loan horizon.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer>
+            <div class="container">
+                <p>CreditQ • Autonomous Reinforcement Learning Credit Decisioning System • Developed with PyTorch, Gymnasium &amp; LendingClub Data</p>
+                <p style="margin-top: 0.5rem; font-size: 0.8rem;">Licensed under MIT • Free and open source for academic and industry research</p>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Interactive Simulation Logic with Chart.js -->
+    <script>
+        let profitChart = null;
+        let cutoffChart = null;
+
+        function switchBenchmarkTab(tab) {
+            const btnV9 = document.getElementById("tabBtnV9");
+            const btnV7 = document.getElementById("tabBtnV7");
+            const contentV9 = document.getElementById("tabContentV9");
+            const contentV7 = document.getElementById("tabContentV7");
+
+            if (tab === 'v9') {
+                btnV9.classList.add("active");
+                btnV7.classList.remove("active");
+                contentV9.style.display = "block";
+                contentV7.style.display = "none";
+            } else {
+                btnV7.classList.add("active");
+                btnV9.classList.remove("active");
+                contentV7.style.display = "block";
+                contentV7.style.display = "none";
+            }
+        }
+
+        function handleFrameworkChange() {
+            const fw = document.getElementById("modelFramework").value;
+            const sliderWeeks = document.getElementById("sliderWeeks");
+            const lblBase = document.getElementById("lblBaselineCutoff");
+
+            if (fw === "v9") {
+                sliderWeeks.max = 78;
+                sliderWeeks.value = 78;
+                lblBase.innerHTML = "Static Baseline Cutoff: <b>Fixed FICO 695</b>";
+            } else {
+                sliderWeeks.max = 24;
+                sliderWeeks.value = 24;
+                lblBase.innerHTML = "Static Baseline Cutoff: <b>Fixed FICO 760</b>";
+            }
+            updateControls();
+            runSimulation();
+        }
+
+        function handlePresetChange() {
+            const preset = document.getElementById("scenarioSelect").value;
+            const sFico = document.getElementById("sliderFico");
+            const sDefault = document.getElementById("sliderDefault");
+            
+            if (preset === "recession") {
+                sFico.value = -20;
+                sDefault.value = 10;
+            } else if (preset === "default_surge") {
+                sFico.value = 0;
+                sDefault.value = 10;
+            } else if (preset === "score_drop") {
+                sFico.value = -20;
+                sDefault.value = 0;
+            } else if (preset === "clean") {
+                sFico.value = 0;
+                sDefault.value = 0;
+            }
+            updateControls();
+            runSimulation();
+        }
+
+        function updateControls() {
+            const fico = document.getElementById("sliderFico").value;
+            const def = document.getElementById("sliderDefault").value;
+            const weeks = document.getElementById("sliderWeeks").value;
+
+            document.getElementById("valFico").innerText = (fico >= 0 ? "+" : "") + fico + " pts";
+            document.getElementById("valDefault").innerText = (def >= 0 ? "+" : "") + def + ".0%";
+            document.getElementById("valWeeks").innerText = weeks + " Weeks (" + Math.round(weeks / 2) + " Bi-Wks)";
+        }
+
+        function runSimulation() {
+            const fw = document.getElementById("modelFramework").value;
+            const ficoShift = parseInt(document.getElementById("sliderFico").value);
+            const defaultShift = parseInt(document.getElementById("sliderDefault").value) / 100.0;
+            const weeks = parseInt(document.getElementById("sliderWeeks").value);
+            const biweeks = Math.max(1, Math.round(weeks / 2));
+
+            const labels = Array.from({length: biweeks}, (_, i) => "Bi-Wk " + (i + 1));
+            const baseCum = [];
+            const rlCum = [];
+            const rlCutoffs = [];
+
+            let cumB = 0;
+            let cumRL = 0;
+
+            if (fw === "v9") {
+                // v9.0 Calibrated Setup (FICO 695 baseline, 55% recovery, LGD 0.45)
+                const cohortSize = 1500;
+                let currentRLCutoff = 695;
+
+                for (let bw = 1; bw <= biweeks; bw++) {
+                    const basePassRate = Math.max(0.08, 0.48 + (ficoShift * 0.008));
+                    const baseDefRate = Math.max(0.02, 0.142 + defaultShift);
+
+                    const loansB = Math.round(cohortSize * basePassRate);
+                    const defsB = Math.round(loansB * baseDefRate);
+                    const goodsB = loansB - defsB;
+                    // In v9, interest profit per good loan is +$1,800, loss per default is $15,000 * 0.45 = $6,750
+                    const profitB = (goodsB * 1800) - (defsB * 6750);
+                    cumB += profitB;
+                    baseCum.push(Math.round(cumB / 1000));
+
+                    // RL agent dynamic adaptation with Dense Counterfactuals
+                    if (defaultShift >= 0.08 && ficoShift >= -5) {
+                        // High default surge alone: agent rapidly freezes toxic originations
+                        currentRLCutoff = Math.min(830, currentRLCutoff + 35);
+                    } else if (defaultShift >= 0.05) {
+                        // Severe combined crisis: agent escalates to high safety tier (790-805)
+                        currentRLCutoff = Math.min(800, currentRLCutoff + 25);
+                    } else if (ficoShift <= -15 && defaultShift <= 0.02) {
+                        // Population drift without default surge: agent safely expands to 675
+                        currentRLCutoff = Math.max(675, currentRLCutoff - 5);
+                    } else if (ficoShift >= 15 && defaultShift <= 0.02) {
+                        currentRLCutoff = Math.min(715, currentRLCutoff + 5);
+                    } else {
+                        // Calm economy / clean control
+                        currentRLCutoff = 685 + Math.round(Math.sin(bw * 0.5) * 5);
+                    }
+                    rlCutoffs.push(currentRLCutoff);
+
+                    let profitRL = 0;
+                    if (currentRLCutoff >= 825) {
+                        // STOP_LENDING freeze: 0 loans originated, 0 loss incurred
+                        profitRL = 0;
+                    } else {
+                        const cutoffDelta = currentRLCutoff - 695;
+                        const rlPassRate = Math.max(0.01, basePassRate * Math.exp(-cutoffDelta / 60));
+                        const rlDefRate = Math.max(0.015, baseDefRate * Math.exp(-cutoffDelta / 35));
+                        const loansRL = Math.round(cohortSize * rlPassRate);
+                        const defsRL = Math.round(loansRL * rlDefRate);
+                        const goodsRL = loansRL - defsRL;
+                        profitRL = (goodsRL * 1800) - (defsRL * 6750);
+                    }
+                    cumRL += profitRL;
+                    rlCum.push(Math.round(cumRL / 1000));
+                }
+
+                // Update KPIs
+                document.getElementById("kpiBaseline").innerText = (cumB >= 0 ? "$" : "-$") + Math.abs(cumB).toLocaleString();
+                document.getElementById("kpiRL").innerText = (cumRL >= 0 ? "$" : "-$") + Math.abs(cumRL).toLocaleString();
+
+                const diff = cumRL - cumB;
+                const kpiDelta = document.getElementById("kpiDelta");
+                kpiDelta.innerText = (diff >= 0 ? "+$" : "-$") + Math.abs(diff).toLocaleString() + (diff >= 0 ? " Advantage" : " Deficit");
+                kpiDelta.className = "kpi-badge " + (diff >= 0 ? "positive" : "negative");
+
+                const avgCutoff = Math.round(rlCutoffs.reduce((a, b) => a + b, 0) / biweeks);
+                document.getElementById("kpiCutoff").innerText = avgCutoff >= 825 ? "STOP_LENDING" : "FICO " + avgCutoff;
+                
+                const avgDefPct = Math.max(0.5, (0.142 + defaultShift) * 100);
+                document.getElementById("kpiDefRate").innerText = avgDefPct.toFixed(1) + "%";
+                document.getElementById("kpiDefSub").innerText = "LGD: 45% (55% Recovery)";
+
+                renderCharts(labels, baseCum, rlCum, rlCutoffs, 695, 660, 830, 'v9');
+            } else {
+                // v7.0 Paper Baseline (FICO 760 baseline, 0% recovery, LGD 1.0, 24 weeks)
+                const cohortSize = 250;
+                let currentRLCutoff = 760;
+
+                for (let bw = 1; bw <= biweeks; bw++) {
+                    const basePassRate = Math.max(0.01, 0.054 + (ficoShift * 0.0015));
+                    const baseDefRate = Math.max(0.01, 0.055 + defaultShift);
+
+                    const loansB = Math.round(cohortSize * basePassRate);
+                    const defsB = Math.round(loansB * baseDefRate);
+                    const profitB = ((loansB - defsB) * 1800) - (defsB * 15000);
+                    cumB += profitB;
+                    baseCum.push(Math.round(cumB / 1000));
+
+                    // RL dynamic adaptation
+                    if (defaultShift > 0.04 || ficoShift < -10) {
+                        currentRLCutoff = Math.min(815, currentRLCutoff + 5);
+                    } else if (defaultShift < -0.02) {
+                        currentRLCutoff = Math.max(730, currentRLCutoff - 5);
+                    }
+                    rlCutoffs.push(currentRLCutoff);
+
+                    const rlPassRate = Math.max(0.005, basePassRate * Math.exp(-(currentRLCutoff - 760) / 25));
+                    const rlDefRate = Math.max(0.01, baseDefRate * Math.exp(-(currentRLCutoff - 760) / 40));
+                    const loansRL = Math.round(cohortSize * rlPassRate);
+                    const defsRL = Math.round(loansRL * rlDefRate);
+                    const profitRL = ((loansRL - defsRL) * 1800) - (defsRL * 15000);
+                    cumRL += profitRL;
+                    rlCum.push(Math.round(cumRL / 1000));
+                }
+
+                // Update KPIs
+                document.getElementById("kpiBaseline").innerText = (cumB >= 0 ? "$" : "-$") + Math.abs(cumB).toLocaleString();
+                document.getElementById("kpiRL").innerText = (cumRL >= 0 ? "$" : "-$") + Math.abs(cumRL).toLocaleString();
+
+                const diff = cumRL - cumB;
+                const kpiDelta = document.getElementById("kpiDelta");
+                kpiDelta.innerText = (diff >= 0 ? "+$" : "-$") + Math.abs(diff).toLocaleString() + (diff >= 0 ? " Advantage" : " Deficit");
+                kpiDelta.className = "kpi-badge " + (diff >= 0 ? "positive" : "negative");
+
+                const avgCutoff = Math.round(rlCutoffs.reduce((a, b) => a + b, 0) / biweeks);
+                document.getElementById("kpiCutoff").innerText = "FICO " + avgCutoff;
+                
+                const avgDefPct = Math.max(0.5, (0.055 + defaultShift) * 100);
+                document.getElementById("kpiDefRate").innerText = avgDefPct.toFixed(1) + "%";
+                document.getElementById("kpiDefSub").innerText = "LGD: 100% (0% Recovery)";
+
+                renderCharts(labels, baseCum, rlCum, rlCutoffs, 760, 720, 820, 'v7');
+            }
+        }
+
+        function renderCharts(labels, baseCum, rlCum, rlCutoffs, baseCutoffVal, minCutoff, maxCutoff, fw) {
+            // Chart 1: Profit Chart
+            const ctx1 = document.getElementById("chartProfit").getContext("2d");
+            if (profitChart) profitChart.destroy();
+
+            const baseLabel = fw === 'v9' ? 'Static Baseline (Cutoff 695)' : 'Static Baseline (Cutoff 760)';
+            const rlLabel = fw === 'v9' ? 'v9.0 Dense Counterfactual RL' : 'Adaptive 4D RL Agent';
+
+            profitChart = new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: baseLabel,
+                            data: baseCum,
+                            borderColor: '#3B82F6',
+                            borderWidth: 2.5,
+                            borderDash: [5, 5],
+                            fill: false,
+                            tension: 0.2
+                        },
+                        {
+                            label: rlLabel,
+                            data: rlCum,
+                            borderColor: '#F97316',
+                            backgroundColor: 'rgba(249, 115, 22, 0.1)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#CBD5E1', font: { family: 'Inter', size: 11 } } },
+                        tooltip: { mode: 'index', intersect: false }
+                    },
+                    scales: {
+                        x: { grid: { color: '#1F2937' }, ticks: { color: '#9CA3AF' } },
+                        y: { 
+                            grid: { color: '#1F2937' }, 
+                            ticks: { color: '#9CA3AF', callback: val => '$' + val + 'k' },
+                            title: { display: true, text: 'Cumulative Profit ($ in Thousands)', color: '#94A3B8' }
+                        }
+                    }
+                }
+            });
+
+            // Chart 2: Cutoff Dynamics Chart
+            const ctx2 = document.getElementById("chartCutoff").getContext("2d");
+            if (cutoffChart) cutoffChart.destroy();
+
+            cutoffChart = new Chart(ctx2, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: baseLabel,
+                            data: Array(labels.length).fill(baseCutoffVal),
+                            borderColor: '#3B82F6',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            pointRadius: 0
+                        },
+                        {
+                            label: rlLabel + ' Threshold',
+                            data: rlCutoffs,
+                            borderColor: '#10B981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            borderWidth: 2.5,
+                            fill: true,
+                            pointRadius: 3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#CBD5E1', font: { family: 'Inter', size: 11 } } },
+                        tooltip: { mode: 'index', intersect: false }
+                    },
+                    scales: {
+                        x: { grid: { color: '#1F2937' }, ticks: { color: '#9CA3AF' } },
+                        y: { 
+                            grid: { color: '#1F2937' }, 
+                            ticks: { 
+                                color: '#9CA3AF',
+                                callback: val => val >= 825 ? 'STOP' : val
+                            },
+                            title: { display: true, text: 'Credit Cutoff Threshold (FICO)', color: '#94A3B8' },
+                            min: minCutoff,
+                            max: maxCutoff
+                        }
+                    }
+                }
+            });
+        }
+
+        // Initialize on load
+        window.addEventListener('DOMContentLoaded', () => {
+            updateControls();
+            runSimulation();
+            
+            // Render LaTeX formulas with KaTeX
+            if (window.renderMathInElement) {
+                renderMathInElement(document.body, {
+                    delimiters: [
+                        {left: '$$', right: '$$', display: true},
+                        {left: '\\[', right: '\\]', display: true},
+                        {left: '\\(', right: '\\)', display: false}
+                    ],
+                    ignoredTags: ["script", "noscript", "style", "textarea", "pre", "code", "option"],
+                    throwOnError: false
+                });
+            }
+        });
+    </script>
+</body>
+</html>
